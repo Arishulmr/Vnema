@@ -9,24 +9,23 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('livestreams', function (Blueprint $table) {
+        Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->string('youtube_livestream_id')->unique();
-            $table->string('title');
+            $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('vtuber_id')->constrained('vtubers', 'id')->onDelete('cascade');
+            $table->timestamp('start_time')->nullable();
+            $table->timestamp('end_time')->nullable();
             $table->timestamps();
         });
     }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('livestreams');
+        Schema::dropIfExists('events');
     }
 };

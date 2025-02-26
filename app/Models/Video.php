@@ -9,20 +9,20 @@ class Video extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['youtube_video_id', 'title', 'description', 'thumbnail_url', 'channel_id', 'livestream_id', 'vtuber_id'];
+    protected $fillable = ['youtube_video_id', 'title', 'description', 'thumbnail_url', 'channel_id', 'vtuber_id'];
 
     public function channel()
     {
         return $this->belongsTo(Channel::class);
     }
 
-    public function livestream()
+    public function livestreams()
     {
-        return $this->belongsTo(Livestream::class);
+        return $this->belongsToMany(Livestream::class, 'livestream_video');
     }
 
     public function vtubers()
     {
-        return $this->hasMany(Vtuber::class);
+        return $this->belongsToMany(Vtuber::class, 'video_vtuber');
     }
 }

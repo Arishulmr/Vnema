@@ -12,12 +12,20 @@
     <nav class="bg-white shadow-md p-4">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <a href="/" class="text-xl font-bold text-blue-600">Vnema</a>
+            <div class="mx-4 flex-1">
+                <form action="{{ route('home') }}" method="GET" class="flex items-center space-x-2">
+                    <input type="text" name="query" placeholder="Search clips via stream link" class="flex-1 p-2 border rounded-lg w-64" required>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Search
+                    </button>
+                </form>
+            </div>
             <div class="flex gap-4">
                 <button onclick="toggleFilter('vtuber-filter')" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
                     VTuber Filter
                 </button>
                 <button onclick="toggleFilter('channel-filter')" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                    Channel Filter
+                    Event Filter
                 </button>
             </div>
         </div>
@@ -54,7 +62,7 @@
             @foreach ($videos as $video)
                 <div class="bg-gray-50 p-4 rounded-lg shadow">
                     <a href="https://www.youtube.com/watch?v={{ $video->youtube_video_id }}" target="_blank">
-                        <img src="{{ $video->thumbnail_url }}" alt="{{ $video->title }}" class="rounded-md">
+                        <img src="{{ $video->thumbnail_url }}" alt="{{ $video->title }}" class="rounded-md ">
                     </a>
                     <h3 class="mt-2 font-semibold text-gray-800">{{ $video->title }}</h3>
                 </div>

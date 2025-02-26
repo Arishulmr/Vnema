@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-</head>
-<body class="bg-gray-100 p-6">
+@extends('layouts.dashboard')
+@section('main')
 
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+
+
+
         <h1 class="text-2xl font-bold mb-4">YouTube Channel Dashboard</h1>
 
         <!-- Search Form -->
@@ -23,13 +17,37 @@
         <div id="searchResults" class="mt-4"></div>
 
         <!-- Added Channels -->
-        <h2 class="text-xl font-semibold mt-6">Added Channels</h2>
-        <ul class="mt-2">
-            @foreach ($channels as $channel)
-                <li class="p-2 border-b">{{ $channel->name }}</li>
-            @endforeach
-        </ul>
-    </div>
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">Channel Name</th>
+                    <th class="border border-gray-300 px-4 py-2">YouTube Channel ID</th>
+                    <th class="border border-gray-300 px-4 py-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($channels as $channel)
+                    <tr class="text-center">
+                        <td class="border border-gray-300 px-4 py-2">{{ $channel->name }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ $channel->youtube_channel_id }}</td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <form action="{{ route('channels.destroy', $channel->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this channel and its videos?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+ 
+
+
+
 
     <script>
         function searchChannels() {
@@ -56,5 +74,4 @@
         }
     </script>
 
-</body>
-</html>
+@endsection

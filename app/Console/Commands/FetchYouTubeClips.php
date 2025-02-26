@@ -25,7 +25,7 @@ class FetchYouTubeClips extends Command
     public function handle()
 {
     $channels = Channel::pluck('youtube_channel_id')->toArray();
-    $keywords = ['Eng Sub', '[English Sub]', 'English Sub'];
+    $keywords = ['Eng Sub', '[English Sub]', 'English Sub', 'ENG SUBS', '(ENG SUBS)'];
     $vtubers = Vtuber::all();
 
 
@@ -75,8 +75,11 @@ protected function updateVtuberIds()
 {
     $vtubers = Vtuber::all();
     foreach ($vtubers as $vtuber) {
-        Video::where('title', 'LIKE', "%{$vtuber->name}%")
-            ->update(['vtuber_id' => $vtuber->id]);
+        $videos = Video::where('title', 'LIKE', "%{$vtuber->name}%")->get();
+        foreach ($videos as $video) {
+            $video->vtubers()->syncWithoutDetaching([$vtuber->id]);
+        }
+
     }
 }
 

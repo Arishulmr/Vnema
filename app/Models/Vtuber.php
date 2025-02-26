@@ -9,10 +9,15 @@ class Vtuber extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'agency'];
+    protected $fillable = ['name', 'agency', 'channelUrl', 'thumbnails'];
 
     public function channels()
     {
         return $this->hasMany(Channel::class);
+    }
+
+    public function videos()
+    {
+        return $this->belongsToMany(Video::class, 'video_vtuber');
     }
 }

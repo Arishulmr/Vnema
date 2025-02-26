@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Livestream;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,23 +15,20 @@ class YouTubeProvider extends ServiceProvider
         $this->apiKey = config('services.youtube.api_key');
     }
 
-    public function searchClips($keywords, $channels)
+    public function fetchLivestreamDetails($livestreamId)
     {
-        $query = implode('|', $keywords);
-        $channelFilter = implode('|', $channels);
+        $url = "https://www.googleapis.com/youtube/v3/videos?id={$livestreamId}&part=snippet&key=" . config('services.youtube.api_key');
 
-        $url = "https://www.googleapis.com/youtube/v3/search";
+        $response = Http::get($url);
 
-        $response = Http::get($url, [
-            'part' => 'snippet',
-            'q' => $query,
-            'channelId' => $channelFilter,
-            'type' => 'video',
-            'maxResults' => 10,
-            'key' => $this->apiKey
-        ]);
+        if ($response->successful() && isset($response['items'][0])) {
+            return [
+                'title' => $response['items'][0]['snippet']['title'],
+                'description' => $response['items'][0]['snippet']['description']
+            ];
+        }
 
-        return $response->json();
+        return null;
     }
 
     public function searchChannels($query)
@@ -53,41 +51,74 @@ class YouTubeProvider extends ServiceProvider
         return $channels;
     }
 
-    // Fetch all videos from a channel
     public function fetchChannelVideos($channelId)
-{
-    $videos = [];
-    $pageToken = null;
+    {
+        $videos = [];
+        $videoIds = [];
+        $pageToken = null;
 
-    do {
-        // Build URL with pagination support
-        $url = "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=50&channelId={$channelId}&key={$this->apiKey}";
-        if ($pageToken) {
-            $url .= "&pageToken={$pageToken}";
+        do {
+            // Fetch videos from the channel (50 per request)
+            $url = "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=50&channelId=" . urlencode($channelId) . "&key=" . $this->apiKey;
+
+            if ($pageToken) {
+                $url .= "&pageToken={$pageToken}";
+            }
+
+            $response = Http::timeout(10)->get($url); // Set timeout for each request
+            if ($response->failed()) {
+                return $videos; // Return what we have if the request fails
+            }
+
+            $data = $response->json();
+            if (!isset($data['items']) || empty($data['items'])) {
+                break; // Stop if no items are returned
+            }
+
+            // Collect video IDs
+            foreach ($data['items'] as $item) {
+                if (isset($item['id']['videoId'])) {
+                    $videoIds[] = $item['id']['videoId'];
+                }
+            }
+
+            // Check for the next page
+            $pageToken = $data['nextPageToken'] ?? null;
+
+            // Sleep for 1 second to avoid hitting API rate limits
+            sleep(1);
+
+        } while ($pageToken);
+
+        // Process video IDs in batches of 50
+        foreach (array_chunk($videoIds, 50) as $videoChunk) {
+            $detailsUrl = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" . implode(',', $videoChunk) . "&key=" . $this->apiKey;
+
+            $detailsResponse = Http::timeout(30)->get($detailsUrl); // Set timeout
+            if ($detailsResponse->failed()) {
+                continue; // Skip failed requests but continue processing others
+            }
+
+            $videoDetails = $detailsResponse->json();
+            if (!isset($videoDetails['items'])) {
+                continue;
+            }
+
+            foreach ($videoDetails['items'] as $video) {
+                $videos[] = [
+                    'id'          => $video['id'],
+                    'title'       => $video['snippet']['title'],
+                    'description' => $video['snippet']['description'],
+                    'thumbnail'   => $video['snippet']['thumbnails']['high']['url'],
+                ];
+            }
+
+            // Sleep for 1 second between batch requests to prevent timeouts
+            sleep(1);
         }
 
-        // Fetch data from YouTube API
-        $response = Http::get($url);
-        if ($response->failed()) {
-            return $videos; // Return what we have if the request fails
-        }
+        return $videos;
+    }
 
-        $data = $response->json();
-        foreach ($data['items'] as $item) {
-            $videos[] = [
-                'id' => $item['id']['videoId'],
-                'title' => $item['snippet']['title'],
-                'description' => $item['snippet']['description'],
-                'thumbnail' => $item['snippet']['thumbnails']['high']['url']
-            ];
-        }
-
-        // Check if there is another page
-        $pageToken = $data['nextPageToken'] ?? null;
-
-    } while ($pageToken); // Continue fetching while there is a next page
-
-    return $videos;
-}
 
 }

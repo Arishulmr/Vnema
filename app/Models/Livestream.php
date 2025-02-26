@@ -9,10 +9,26 @@ class Livestream extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['youtube_livestream_id', 'title', 'description'];
+    protected $fillable = [
+        'youtube_livestream_id',
+        'title',
+        'description',
+        'event_id',
+        'vtuber_id'
+    ];
 
     public function videos()
     {
-        return $this->hasMany(Video::class);
+        return $this->belongsToMany(Video::class, 'livestream_video');
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function vtuber()
+    {
+        return $this->belongsTo(Vtuber::class);
     }
 }
